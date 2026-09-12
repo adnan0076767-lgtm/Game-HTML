@@ -1,1088 +1,1688 @@
-```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-
-<title>Battle Arena V3</title>
-<meta name="description" content="Battle Arena V3 - game pertarungan HTML">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Battle Arena V4</title>
 
 <style>
 *{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-    -webkit-tap-highlight-color:transparent;
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#05070d;
+  font-family:Arial,Helvetica,sans-serif;
+  color:white;
 }
 
 body{
-    min-height:100vh;
-    font-family:Arial,Helvetica,sans-serif;
-    color:#fff;
-    background:
-        radial-gradient(circle at 50% 0%,#3b0764 0%,transparent 38%),
-        linear-gradient(135deg,#020617,#111827 55%,#1e1b4b);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:12px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
 
-.game{
-    width:100%;
-    max-width:850px;
+#game{
+  position:relative;
+  width:100vw;
+  height:100vh;
+  max-width:1400px;
+  overflow:hidden;
+  background:#080b13;
 }
 
-.header{
-    text-align:center;
-    margin-bottom:10px;
+canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
 }
 
-.title{
-    font-size:clamp(28px,7vw,48px);
-    font-weight:900;
-    letter-spacing:2px;
-    text-shadow:0 0 20px #8b5cf6;
+#hud{
+  position:absolute;
+  top:15px;
+  left:50%;
+  transform:translateX(-50%);
+  width:min(1100px,94%);
+  z-index:5;
+  pointer-events:none;
 }
 
-.subtitle{
-    color:#cbd5e1;
-    font-size:13px;
-    margin-top:4px;
+.names{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:7px;
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:1px;
 }
 
-.arena{
-    position:relative;
-    overflow:hidden;
-    min-height:530px;
-    border:2px solid #7c3aed;
-    border-radius:24px;
-    background:
-        radial-gradient(circle at 50% 45%,rgba(124,58,237,.18),transparent 30%),
-        linear-gradient(180deg,#172554,#020617);
-    box-shadow:
-        0 0 40px rgba(124,58,237,.25),
-        inset 0 -80px 100px rgba(0,0,0,.55);
+.playerName{color:#55c7ff}
+.enemyName{color:#ff5252}
+
+.bars{
+  display:grid;
+  grid-template-columns:1fr 130px 1fr;
+  gap:12px;
+  align-items:center;
 }
 
-/* STARS */
-
-.arena::before{
-    content:"✦  ·   ✧     ·   ✦       ·     ✧   ·  ✦";
-    position:absolute;
-    top:20px;
-    left:0;
-    width:100%;
-    text-align:center;
-    color:rgba(255,255,255,.25);
-    font-size:25px;
-    letter-spacing:15px;
+.hpOuter{
+  height:22px;
+  border:2px solid rgba(255,255,255,.75);
+  border-radius:8px;
+  background:#151922;
+  overflow:hidden;
+  box-shadow:0 0 14px rgba(255,255,255,.12);
 }
 
-/* ROUND */
-
-.round{
-    position:absolute;
-    top:14px;
-    left:50%;
-    transform:translateX(-50%);
-    background:rgba(15,23,42,.8);
-    border:1px solid #64748b;
-    padding:7px 18px;
-    border-radius:30px;
-    font-size:13px;
-    font-weight:bold;
-    z-index:5;
+.hp{
+  height:100%;
+  width:100%;
+  transition:width .15s linear;
 }
 
-/* FIGHTERS */
-
-.fighters{
-    position:absolute;
-    top:85px;
-    left:0;
-    width:100%;
-    display:flex;
-    justify-content:space-around;
-    align-items:center;
-    padding:0 25px;
+.hp.player{
+  background:linear-gradient(90deg,#0878ff,#47d8ff);
 }
 
-.fighter{
-    width:38%;
-    text-align:center;
+.hp.enemy{
+  background:linear-gradient(90deg,#ff2525,#ff7b35);
+  float:right;
 }
 
-.character{
-    width:130px;
-    height:150px;
-    margin:auto;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:95px;
-    filter:drop-shadow(0 12px 15px rgba(0,0,0,.6));
-    transition:transform .15s;
+.energyOuter{
+  height:9px;
+  border-radius:5px;
+  background:#141722;
+  overflow:hidden;
+  margin-top:5px;
+  border:1px solid #555;
 }
 
-.player-character{
-    animation:floatPlayer 2s ease-in-out infinite;
+.energy{
+  height:100%;
+  width:100%;
+  background:linear-gradient(90deg,#8d4dff,#dc65ff);
+  transition:width .1s;
 }
 
-.enemy-character{
-    animation:floatEnemy 2.2s ease-in-out infinite;
+#round{
+  text-align:center;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:#ffd76a;
+  text-shadow:0 0 10px #ff9b00;
 }
 
-@keyframes floatPlayer{
-    0%,100%{transform:translateY(0)}
-    50%{transform:translateY(-7px)}
+#combo{
+  position:absolute;
+  top:115px;
+  left:50%;
+  transform:translateX(-50%) scale(.8);
+  opacity:0;
+  z-index:8;
+  font-size:34px;
+  font-weight:1000;
+  color:#ffe15b;
+  text-shadow:0 0 8px #ff5a00,3px 3px 0 #5d1600;
+  transition:.15s;
+  pointer-events:none;
 }
 
-@keyframes floatEnemy{
-    0%,100%{transform:translateY(-4px)}
-    50%{transform:translateY(5px)}
+#combo.show{
+  opacity:1;
+  transform:translateX(-50%) scale(1);
 }
 
-.name{
-    font-size:18px;
-    font-weight:900;
-    margin-bottom:6px;
+#message{
+  position:absolute;
+  top:45%;
+  left:50%;
+  transform:translate(-50%,-50%) scale(.8);
+  z-index:20;
+  text-align:center;
+  pointer-events:none;
+  opacity:0;
+  transition:.25s;
 }
 
-.level{
-    color:#94a3b8;
-    font-size:11px;
-    margin-bottom:7px;
+#message.show{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1);
 }
 
-/* HP */
-
-.hp-wrap{
-    width:100%;
-    max-width:220px;
-    margin:auto;
+#message h1{
+  font-size:clamp(40px,8vw,90px);
+  font-weight:1000;
+  text-transform:uppercase;
+  text-shadow:0 5px 20px #000;
 }
 
-.hp-bar{
-    height:18px;
-    border-radius:20px;
-    background:#1e293b;
-    border:2px solid #475569;
-    overflow:hidden;
+#message p{
+  margin-top:8px;
+  font-size:16px;
+  font-weight:bold;
 }
 
-.hp-fill{
-    height:100%;
-    width:100%;
-    background:linear-gradient(90deg,#16a34a,#4ade80);
-    transition:width .3s;
+#startScreen{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(70,80,150,.28),transparent 35%),
+    linear-gradient(180deg,rgba(2,4,10,.65),rgba(2,3,7,.94));
 }
 
-.enemy-hp{
-    background:linear-gradient(90deg,#dc2626,#fb7185);
+.panel{
+  width:min(520px,90%);
+  padding:35px 25px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:22px;
+  background:rgba(10,13,23,.82);
+  backdrop-filter:blur(12px);
+  box-shadow:0 25px 80px rgba(0,0,0,.6);
 }
 
-.hp-text{
-    font-size:11px;
-    margin-top:4px;
-    color:#cbd5e1;
+.panel h1{
+  font-size:clamp(38px,9vw,68px);
+  font-weight:1000;
+  letter-spacing:3px;
+  background:linear-gradient(90deg,#42caff,#fff,#ff4545);
+  -webkit-background-clip:text;
+  color:transparent;
 }
 
-/* VS */
-
-.vs{
-    position:absolute;
-    top:205px;
-    left:50%;
-    transform:translateX(-50%);
-    font-size:35px;
-    font-weight:900;
-    font-style:italic;
-    color:#facc15;
-    text-shadow:0 0 15px #f59e0b;
-    z-index:4;
+.panel h2{
+  margin-top:4px;
+  font-size:14px;
+  color:#9ca8bd;
+  letter-spacing:4px;
 }
 
-/* LOG */
-
-.battle-log{
-    position:absolute;
-    left:50%;
-    transform:translateX(-50%);
-    top:335px;
-    width:85%;
-    min-height:55px;
-    text-align:center;
-    color:#cbd5e1;
-    font-size:14px;
-    padding:10px;
-    border-radius:12px;
-    background:rgba(2,6,23,.65);
-    border:1px solid rgba(148,163,184,.2);
+.panel p{
+  color:#b9c1d2;
+  line-height:1.7;
+  margin:22px 0;
+  font-size:14px;
 }
 
-/* ACTIONS */
-
-.actions{
-    position:absolute;
-    bottom:18px;
-    left:50%;
-    transform:translateX(-50%);
-    width:92%;
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:8px;
+.mainBtn{
+  border:0;
+  border-radius:12px;
+  padding:16px 35px;
+  font-size:17px;
+  font-weight:1000;
+  color:white;
+  cursor:pointer;
+  background:linear-gradient(135deg,#086cff,#742cff);
+  box-shadow:0 10px 35px rgba(55,85,255,.35);
 }
 
-.action{
-    border:0;
-    border-radius:14px;
-    padding:13px 5px;
-    color:white;
-    font-weight:900;
-    font-size:13px;
-    cursor:pointer;
-    box-shadow:0 6px 15px rgba(0,0,0,.3);
-    transition:.12s;
+.mainBtn:active{
+  transform:scale(.96);
 }
 
-.action:active{
-    transform:scale(.94);
+.stats{
+  display:flex;
+  justify-content:center;
+  gap:28px;
+  margin-top:20px;
+  color:#8791a7;
+  font-size:12px;
+}
+
+.stats b{
+  display:block;
+  color:white;
+  font-size:17px;
+  margin-top:4px;
+}
+
+#controls{
+  position:absolute;
+  z-index:10;
+  left:0;
+  right:0;
+  bottom:18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  padding:0 25px;
+  pointer-events:none;
+}
+
+.moveControls,
+.attackControls{
+  display:flex;
+  gap:10px;
+  pointer-events:auto;
+}
+
+.control{
+  width:58px;
+  height:58px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:16px;
+  background:rgba(10,14,24,.78);
+  color:white;
+  font-weight:1000;
+  font-size:13px;
+  box-shadow:0 7px 20px rgba(0,0,0,.35);
+  backdrop-filter:blur(7px);
+  user-select:none;
+}
+
+.control:active,
+.control.active{
+  transform:scale(.9);
+  background:rgba(60,90,150,.9);
 }
 
 .attack{
-    background:linear-gradient(135deg,#dc2626,#991b1b);
+  width:70px;
+  height:70px;
+  border-radius:50%;
 }
 
-.defend{
-    background:linear-gradient(135deg,#2563eb,#1d4ed8);
+.attack.normal{
+  background:linear-gradient(145deg,#ff9d00,#ff3d00);
 }
 
-.skill{
-    background:linear-gradient(135deg,#9333ea,#6b21a8);
+.attack.heavy{
+  background:linear-gradient(145deg,#ff4c4c,#9c0000);
 }
 
-.heal{
-    background:linear-gradient(135deg,#16a34a,#15803d);
+.attack.skill{
+  background:linear-gradient(145deg,#ae55ff,#4012b8);
 }
 
-.action:disabled{
-    opacity:.35;
-    cursor:not-allowed;
+#help{
+  position:absolute;
+  bottom:98px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:5;
+  color:rgba(255,255,255,.42);
+  font-size:11px;
+  letter-spacing:1px;
+  text-align:center;
+  pointer-events:none;
 }
 
-/* OVERLAY */
-
-.overlay{
-    position:absolute;
-    inset:0;
-    z-index:20;
-    background:rgba(2,6,23,.9);
-    backdrop-filter:blur(7px);
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    text-align:center;
-    padding:25px;
+#pause{
+  position:absolute;
+  top:18px;
+  right:20px;
+  z-index:12;
+  width:40px;
+  height:40px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(0,0,0,.35);
+  color:white;
+  font-size:18px;
 }
 
-.overlay.hidden{
-    display:none;
-}
+@media(max-width:650px){
+  .bars{
+    grid-template-columns:1fr 65px 1fr;
+    gap:6px;
+  }
 
-.overlay h2{
-    font-size:clamp(30px,8vw,52px);
-    margin-bottom:12px;
-}
+  .hpOuter{
+    height:18px;
+  }
 
-.overlay p{
-    max-width:500px;
-    color:#cbd5e1;
-    line-height:1.6;
-}
-
-.big{
-    font-size:60px;
-    font-weight:900;
-    color:#facc15;
-    text-shadow:0 0 25px #f59e0b;
-    margin:5px;
-}
-
-.main-btn{
-    border:0;
-    padding:15px 35px;
-    margin-top:18px;
-    border-radius:15px;
-    color:white;
-    background:linear-gradient(135deg,#7c3aed,#4f46e5);
-    font-size:17px;
-    font-weight:900;
-    cursor:pointer;
-    box-shadow:0 8px 25px rgba(99,102,241,.45);
-}
-
-.reward{
-    margin-top:7px;
-    color:#facc15;
-    font-weight:bold;
-}
-
-/* DAMAGE */
-
-.damage{
-    position:absolute;
-    z-index:30;
-    pointer-events:none;
-    font-size:30px;
-    font-weight:900;
-    color:#ef4444;
-    text-shadow:0 0 10px #000;
-    animation:damageAnim .7s forwards;
-}
-
-@keyframes damageAnim{
-    0%{
-        opacity:1;
-        transform:translate(-50%,0) scale(.7);
-    }
-    100%{
-        opacity:0;
-        transform:translate(-50%,-70px) scale(1.3);
-    }
-}
-
-/* ATTACK ANIMATION */
-
-.shake{
-    animation:shake .25s;
-}
-
-@keyframes shake{
-    0%{transform:translateX(0)}
-    25%{transform:translateX(-15px)}
-    50%{transform:translateX(15px)}
-    75%{transform:translateX(-8px)}
-    100%{transform:translateX(0)}
-}
-
-/* FOOTER */
-
-.footer{
-    text-align:center;
-    color:#64748b;
+  .names{
     font-size:11px;
-    margin-top:8px;
-}
+  }
 
-@media(max-width:600px){
+  #controls{
+    padding:0 10px;
+    bottom:10px;
+  }
 
-    body{
-        padding:7px;
-        align-items:flex-start;
-        padding-top:12px;
-    }
+  .control{
+    width:50px;
+    height:50px;
+    border-radius:14px;
+  }
 
-    .arena{
-        min-height:620px;
-    }
+  .attack{
+    width:61px;
+    height:61px;
+  }
 
-    .fighters{
-        top:80px;
-        padding:0 8px;
-    }
+  .attackControls,
+  .moveControls{
+    gap:6px;
+  }
 
-    .fighter{
-        width:43%;
-    }
-
-    .character{
-        width:95px;
-        height:125px;
-        font-size:75px;
-    }
-
-    .vs{
-        top:190px;
-        font-size:27px;
-    }
-
-    .battle-log{
-        top:310px;
-        width:92%;
-        font-size:12px;
-    }
-
-    .actions{
-        bottom:15px;
-        grid-template-columns:repeat(2,1fr);
-    }
-
-    .action{
-        padding:14px 4px;
-        font-size:13px;
-    }
+  #help{
+    display:none;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div class="game">
+<div id="game">
 
-    <div class="header">
-        <div class="title">⚔️ BATTLE ARENA</div>
-        <div class="subtitle">V3 • Pertarungan Dimulai!</div>
+<canvas id="canvas"></canvas>
+
+<div id="hud">
+
+  <div class="names">
+    <span class="playerName">⚔ WARRIOR</span>
+    <span id="round">ROUND 1</span>
+    <span class="enemyName">DEMON ⚠</span>
+  </div>
+
+  <div class="bars">
+
+    <div>
+      <div class="hpOuter">
+        <div id="playerHP" class="hp player"></div>
+      </div>
+      <div class="energyOuter">
+        <div id="playerEnergy" class="energy"></div>
+      </div>
     </div>
 
-    <div class="arena" id="arena">
+    <div></div>
 
-        <div class="round">
-            ROUND <span id="round">1</span>
-        </div>
-
-        <div class="fighters">
-
-            <div class="fighter" id="playerBox">
-
-                <div class="character player-character" id="playerCharacter">
-                    🧙
-                </div>
-
-                <div class="name">🧙 HERO</div>
-
-                <div class="level">
-                    LEVEL <span id="playerLevel">1</span>
-                </div>
-
-                <div class="hp-wrap">
-                    <div class="hp-bar">
-                        <div class="hp-fill" id="playerHP"></div>
-                    </div>
-
-                    <div class="hp-text">
-                        HP <span id="playerHPText">100</span>/100
-                    </div>
-                </div>
-
-            </div>
-
-
-            <div class="fighter" id="enemyBox">
-
-                <div class="character enemy-character" id="enemyCharacter">
-                    👹
-                </div>
-
-                <div class="name">👹 DEMON</div>
-
-                <div class="level">
-                    LEVEL <span id="enemyLevel">1</span>
-                </div>
-
-                <div class="hp-wrap">
-                    <div class="hp-bar">
-                        <div class="hp-fill enemy-hp" id="enemyHP"></div>
-                    </div>
-
-                    <div class="hp-text">
-                        HP <span id="enemyHPText">100</span>/100
-                    </div>
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="vs">VS</div>
-
-        <div class="battle-log" id="battleLog">
-            Pilih aksi untuk memulai pertarungan!
-        </div>
-
-
-        <div class="actions">
-
-            <button class="action attack" onclick="attack()">
-                ⚔️ SERANG
-            </button>
-
-            <button class="action defend" onclick="defend()">
-                🛡️ BERTAHAN
-            </button>
-
-            <button class="action skill" onclick="skill()">
-                🔥 SKILL
-            </button>
-
-            <button class="action heal" onclick="heal()">
-                ❤️ HEAL
-            </button>
-
-        </div>
-
-
-        <div class="overlay" id="startScreen">
-
-            <h2>⚔️ BATTLE ARENA</h2>
-
-            <p>
-                Kamu adalah seorang Hero.
-                Kalahkan Demon dan naikkan levelmu!
-            </p>
-
-            <button class="main-btn" onclick="startGame()">
-                🚀 MULAI PERTARUNGAN
-            </button>
-
-        </div>
-
-
-        <div class="overlay hidden" id="resultScreen">
-
-            <h2 id="resultTitle">🏆 MENANG!</h2>
-
-            <div class="big" id="resultIcon">🏆</div>
-
-            <p id="resultText">
-                Kamu berhasil mengalahkan musuh!
-            </p>
-
-            <div class="reward" id="rewardText">
-                +50 EXP • +100 COIN
-            </div>
-
-            <button class="main-btn" onclick="startGame()">
-                ⚔️ PERTARUNGAN LAGI
-            </button>
-
-        </div>
-
+    <div>
+      <div class="hpOuter">
+        <div id="enemyHP" class="hp enemy"></div>
+      </div>
+      <div class="energyOuter">
+        <div id="enemyEnergy" class="energy"></div>
+      </div>
     </div>
 
-    <div class="footer">
-        Battle Arena V3 • HTML + CSS + JavaScript
-    </div>
+  </div>
+</div>
+
+<div id="combo">COMBO x2</div>
+
+<div id="message">
+  <h1 id="messageTitle"></h1>
+  <p id="messageText"></p>
+</div>
+
+<div id="help">
+  KEYBOARD: A/D MOVE • J ATTACK • K HEAVY • L SKILL • SPACE BLOCK • SHIFT DASH
+</div>
+
+<button id="pause">Ⅱ</button>
+
+<div id="controls">
+
+  <div class="moveControls">
+    <button class="control" data-key="left">◀</button>
+    <button class="control" data-key="right">▶</button>
+    <button class="control" data-key="block">🛡</button>
+  </div>
+
+  <div class="attackControls">
+    <button class="control attack normal" data-key="attack">ATK</button>
+    <button class="control attack heavy" data-key="heavy">HEAVY</button>
+    <button class="control attack skill" data-key="skill">SKILL</button>
+    <button class="control" data-key="dash">DASH</button>
+  </div>
 
 </div>
 
+<div id="startScreen">
+  <div class="panel">
+    <h1>BATTLE</h1>
+    <h2>ARENA V4</h2>
+
+    <p>
+      Masuki arena.<br>
+      Hadapi Demon dan buktikan siapa petarung terbaik.
+    </p>
+
+    <button class="mainBtn" id="startBtn">
+      ⚔ MULAI PERTARUNGAN
+    </button>
+
+    <div class="stats">
+      <div>LEVEL<b id="levelStat">1</b></div>
+      <div>XP<b id="xpStat">0</b></div>
+      <div>COIN<b id="coinStat">0</b></div>
+    </div>
+  </div>
+</div>
+
+</div>
 
 <script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-let playerHP = 100;
-let enemyHP = 100;
+let W=0,H=0,DPR=1;
 
-let maxPlayerHP = 100;
-let maxEnemyHP = 100;
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2);
+  W=window.innerWidth;
+  H=window.innerHeight;
 
-let playerLevel = 1;
-let enemyLevel = 1;
+  canvas.width=W*DPR;
+  canvas.height=H*DPR;
+  canvas.style.width=W+"px";
+  canvas.style.height=H+"px";
 
-let round = 1;
-let playerXP = 0;
-let coins = 0;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
 
-let defending = false;
-let gameRunning = false;
-let actionLocked = false;
+window.addEventListener("resize",resize);
+resize();
 
+const player={
+  x:0,
+  y:0,
+  vx:0,
+  hp:100,
+  maxHp:100,
+  energy:100,
+  maxEnergy:100,
+  facing:1,
+  state:"idle",
+  attackTimer:0,
+  hurtTimer:0,
+  block:false,
+  dashTimer:0,
+  combo:0,
+  comboTimer:0
+};
 
-/* ELEMENTS */
+const enemy={
+  x:0,
+  y:0,
+  vx:0,
+  hp:100,
+  maxHp:100,
+  energy:100,
+  maxEnergy:100,
+  facing:-1,
+  state:"idle",
+  attackTimer:0,
+  hurtTimer:0,
+  block:false,
+  think:0,
+  combo:0
+};
 
-const playerHPBar =
-    document.getElementById("playerHP");
+let running=false;
+let paused=false;
+let gameOver=false;
+let shake=0;
+let time=0;
+let particles=[];
+let floating=[];
+let sparks=[];
+let keys={};
 
-const enemyHPBar =
-    document.getElementById("enemyHP");
+let level=Number(localStorage.getItem("battleLevel")||1);
+let xp=Number(localStorage.getItem("battleXP")||0);
+let coins=Number(localStorage.getItem("battleCoins")||0);
 
-const playerHPText =
-    document.getElementById("playerHPText");
+document.getElementById("levelStat").textContent=level;
+document.getElementById("xpStat").textContent=xp;
+document.getElementById("coinStat").textContent=coins;
 
-const enemyHPText =
-    document.getElementById("enemyHPText");
+function groundY(){
+  return H*0.76;
+}
 
-const playerLevelText =
-    document.getElementById("playerLevel");
+function resetFighters(){
+  player.x=W*.28;
+  enemy.x=W*.72;
 
-const enemyLevelText =
-    document.getElementById("enemyLevel");
+  player.y=groundY();
+  enemy.y=groundY();
 
-const roundText =
-    document.getElementById("round");
+  player.vx=0;
+  enemy.vx=0;
 
-const battleLog =
-    document.getElementById("battleLog");
+  player.hp=player.maxHp;
+  enemy.hp=enemy.maxHp;
 
-const arena =
-    document.getElementById("arena");
+  player.energy=100;
+  enemy.energy=100;
 
-const playerBox =
-    document.getElementById("playerBox");
+  player.state="idle";
+  enemy.state="idle";
 
-const enemyBox =
-    document.getElementById("enemyBox");
+  player.attackTimer=0;
+  enemy.attackTimer=0;
 
-const startScreen =
-    document.getElementById("startScreen");
+  player.block=false;
+  enemy.block=false;
 
-const resultScreen =
-    document.getElementById("resultScreen");
-
-
-/* LOAD SAVE */
-
-playerLevel =
-    Number(localStorage.getItem("battlePlayerLevel")) || 1;
-
-playerXP =
-    Number(localStorage.getItem("battlePlayerXP")) || 0;
-
-coins =
-    Number(localStorage.getItem("battleCoins")) || 0;
-
-playerLevelText.textContent = playerLevel;
-
-
-/* START */
+  player.combo=0;
+  enemy.combo=0;
+}
 
 function startGame(){
+  running=true;
+  paused=false;
+  gameOver=false;
 
-    playerHP =
-        Math.min(100 + ((playerLevel - 1) * 10),180);
+  document.getElementById("startScreen").style.display="none";
+  document.getElementById("message").classList.remove("show");
 
-    maxPlayerHP = playerHP;
-
-    enemyLevel =
-        Math.max(1,playerLevel);
-
-    maxEnemyHP =
-        100 + ((enemyLevel - 1) * 20);
-
-    enemyHP = maxEnemyHP;
-
-    round = 1;
-
-    defending = false;
-
-    gameRunning = true;
-
-    actionLocked = false;
-
-    startScreen.classList.add("hidden");
-    resultScreen.classList.add("hidden");
-
-    updateUI();
-
-    log(
-        "⚔️ Pertarungan dimulai! Pilih aksimu."
-    );
+  resetFighters();
 }
 
+document.getElementById("startBtn").onclick=startGame;
 
-/* UI */
+document.getElementById("pause").onclick=()=>{
+  if(!running || gameOver)return;
+  paused=!paused;
+  document.getElementById("pause").textContent=paused?"▶":"Ⅱ";
+};
 
-function updateUI(){
+window.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()]=true;
 
-    playerHPBar.style.width =
-        Math.max(0,(playerHP / maxPlayerHP) * 100) + "%";
+  if([" ","arrowleft","arrowright"].includes(e.key.toLowerCase()))
+    e.preventDefault();
 
-    enemyHPBar.style.width =
-        Math.max(0,(enemyHP / maxEnemyHP) * 100) + "%";
+  if(e.key.toLowerCase()==="j") attack();
+  if(e.key.toLowerCase()==="k") heavyAttack();
+  if(e.key.toLowerCase()==="l") skillAttack();
+  if(e.key==="Shift") dash();
+});
 
-    playerHPText.textContent =
-        Math.max(0,Math.ceil(playerHP));
+window.addEventListener("keyup",e=>{
+  keys[e.key.toLowerCase()]=false;
+});
 
-    enemyHPText.textContent =
-        Math.max(0,Math.ceil(enemyHP));
+document.querySelectorAll(".control").forEach(btn=>{
 
-    playerLevelText.textContent =
-        playerLevel;
+  const key=btn.dataset.key;
 
-    enemyLevelText.textContent =
-        enemyLevel;
+  const down=e=>{
+    e.preventDefault();
+    btn.classList.add("active");
 
-    roundText.textContent =
-        round;
+    if(key==="left") keys.arrowleft=true;
+    if(key==="right") keys.arrowright=true;
+    if(key==="block") keys.block=true;
+    if(key==="attack") attack();
+    if(key==="heavy") heavyAttack();
+    if(key==="skill") skillAttack();
+    if(key==="dash") dash();
+  };
+
+  const up=e=>{
+    e.preventDefault();
+    btn.classList.remove("active");
+
+    if(key==="left") keys.arrowleft=false;
+    if(key==="right") keys.arrowright=false;
+    if(key==="block") keys.block=false;
+  };
+
+  btn.addEventListener("pointerdown",down);
+  btn.addEventListener("pointerup",up);
+  btn.addEventListener("pointercancel",up);
+  btn.addEventListener("pointerleave",up);
+});
+
+function canAct(){
+  return running&&!paused&&!gameOver&&player.hurtTimer<=0;
 }
-
-
-/* LOG */
-
-function log(message){
-
-    battleLog.textContent = message;
-}
-
-
-/* RANDOM DAMAGE */
-
-function randomDamage(min,max){
-
-    return Math.floor(
-        Math.random() * (max - min + 1)
-    ) + min;
-}
-
-
-/* ATTACK */
 
 function attack(){
 
-    if(!canAct()) return;
+  if(!canAct())return;
+  if(player.attackTimer>0)return;
 
-    actionLocked = true;
+  player.state="attack";
+  player.attackTimer=.38;
 
-    const damage =
-        randomDamage(
-            15 + playerLevel * 2,
-            25 + playerLevel * 3
-        );
+  hitCheck(18,8,"normal");
+}
 
-    enemyHP -= damage;
+function heavyAttack(){
 
-    showDamage(
-        damage,
-        enemyBox
-    );
+  if(!canAct())return;
+  if(player.attackTimer>0)return;
+  if(player.energy<18)return;
 
-    enemyBox.classList.add("shake");
+  player.energy-=18;
 
-    setTimeout(function(){
-        enemyBox.classList.remove("shake");
-    },250);
+  player.state="heavy";
+  player.attackTimer=.62;
 
-    log(
-        "⚔️ Kamu menyerang dan memberi " +
-        damage +
-        " damage!"
-    );
+  hitCheck(28,14,"heavy");
+}
 
-    updateUI();
+function skillAttack(){
 
-    if(enemyHP <= 0){
+  if(!canAct())return;
+  if(player.attackTimer>0)return;
+  if(player.energy<40)return;
 
-        setTimeout(winGame,500);
+  player.energy-=40;
 
-        return;
+  player.state="skill";
+  player.attackTimer=.9;
+
+  setTimeout(()=>{
+    if(!running)return;
+
+    hitCheck(45,24,"skill");
+
+    for(let i=0;i<35;i++){
+      spawnParticle(
+        player.x+player.facing*45,
+        player.y-75,
+        "magic"
+      );
     }
 
-    setTimeout(enemyTurn,650);
+    shake=16;
+  },250);
 }
 
+function dash(){
 
-/* DEFEND */
+  if(!canAct())return;
+  if(player.energy<12)return;
 
-function defend(){
+  player.energy-=12;
+  player.dashTimer=.22;
+  player.vx=player.facing*720;
 
-    if(!canAct()) return;
-
-    actionLocked = true;
-
-    defending = true;
-
-    log(
-        "🛡️ Kamu bertahan! Damage musuh akan berkurang."
-    );
-
-    setTimeout(enemyTurn,650);
+  for(let i=0;i<10;i++){
+    spawnParticle(player.x,player.y-45,"dash");
+  }
 }
 
+function hitCheck(range,damage,type){
 
-/* SKILL */
+  const distance=Math.abs(player.x-enemy.x);
 
-function skill(){
+  if(distance>range+75)return;
 
-    if(!canAct()) return;
+  if(enemy.block){
+    damage*=.2;
 
-    actionLocked = true;
+    floating.push({
+      x:enemy.x,
+      y:enemy.y-110,
+      text:"BLOCK",
+      life:1,
+      color:"#6dafff"
+    });
 
-    const chance =
-        Math.random();
+    shake=4;
+  }else{
 
-    if(chance < 0.2){
+    enemy.hp=Math.max(0,enemy.hp-damage);
 
-        log(
-            "💨 SKILL GAGAL! Musuh berhasil menghindar."
-        );
+    enemy.hurtTimer=.22;
+    enemy.state="hurt";
+    enemy.vx=player.facing*(type==="skill"?390:210);
 
-        setTimeout(enemyTurn,650);
+    player.combo++;
+    player.comboTimer=1.2;
 
-        return;
+    floating.push({
+      x:enemy.x,
+      y:enemy.y-110,
+      text:"-"+Math.round(damage),
+      life:1,
+      color:type==="skill"?"#d96cff":"#ffffff"
+    });
+
+    for(let i=0;i<12;i++)
+      spawnParticle(enemy.x,enemy.y-65,"hit");
+
+    shake=type==="skill"?14:7;
+
+    if(enemy.hp<=0){
+      win();
+    }
+  }
+}
+
+function enemyAttack(){
+
+  if(gameOver)return;
+  if(enemy.attackTimer>0)return;
+
+  const d=Math.abs(enemy.x-player.x);
+
+  if(d<125){
+
+    const roll=Math.random();
+
+    if(roll<.16 && enemy.energy>=25){
+      enemy.energy-=25;
+      enemy.state="skill";
+      enemy.attackTimer=.85;
+
+      setTimeout(()=>{
+        if(!running||gameOver)return;
+
+        enemyHit(30,"skill");
+
+        for(let i=0;i<20;i++)
+          spawnParticle(player.x,player.y-60,"magic");
+
+        shake=12;
+
+      },320);
+
+    }else{
+
+      enemy.state="attack";
+      enemy.attackTimer=.5;
+
+      setTimeout(()=>{
+        if(!running||gameOver)return;
+        enemyHit(12,"normal");
+      },170);
+    }
+  }
+}
+
+function enemyHit(damage,type){
+
+  if(player.block){
+
+    damage*=.18;
+
+    floating.push({
+      x:player.x,
+      y:player.y-105,
+      text:"BLOCK",
+      life:1,
+      color:"#64c7ff"
+    });
+
+  }else{
+
+    player.hp=Math.max(0,player.hp-damage);
+
+    player.hurtTimer=.25;
+    player.state="hurt";
+    player.vx=enemy.facing*(type==="skill"?-330:-190);
+
+    floating.push({
+      x:player.x,
+      y:player.y-110,
+      text:"-"+Math.round(damage),
+      life:1,
+      color:"#ff7777"
+    });
+
+    for(let i=0;i<10;i++)
+      spawnParticle(player.x,player.y-60,"hit");
+
+    shake=type==="skill"?12:6;
+
+    if(player.hp<=0)
+      lose();
+  }
+}
+
+function update(){
+
+  if(!running||paused)return;
+
+  time+=1/60;
+
+  const dt=1/60;
+
+  player.block=!!keys.block && player.attackTimer<=0;
+
+  if(player.attackTimer>0){
+    player.attackTimer-=dt;
+
+    if(player.attackTimer<=0)
+      player.state="idle";
+  }
+
+  if(enemy.attackTimer>0){
+    enemy.attackTimer-=dt;
+
+    if(enemy.attackTimer<=0)
+      enemy.state="idle";
+  }
+
+  if(player.hurtTimer>0){
+    player.hurtTimer-=dt;
+  }
+
+  if(enemy.hurtTimer>0){
+    enemy.hurtTimer-=dt;
+  }
+
+  if(player.comboTimer>0){
+    player.comboTimer-=dt;
+
+    if(player.comboTimer<=0)
+      player.combo=0;
+  }
+
+  // PLAYER MOVEMENT
+
+  if(player.hurtTimer<=0 && player.attackTimer<=0 && player.dashTimer<=0){
+
+    if(keys.arrowleft){
+      player.vx=-260;
+      player.facing=-1;
+    }
+    else if(keys.arrowright){
+      player.vx=260;
+      player.facing=1;
+    }
+    else{
+      player.vx*=.78;
     }
 
-    const damage =
-        randomDamage(
-            30 + playerLevel * 4,
-            50 + playerLevel * 5
-        );
+    if(player.block)
+      player.vx*=.25;
 
-    enemyHP -= damage;
+  }else{
+    player.vx*=.94;
+  }
 
-    showDamage(
-        damage,
-        enemyBox
+  if(player.dashTimer>0){
+    player.dashTimer-=dt;
+  }
+
+  player.x+=player.vx*dt;
+
+  // ENEMY AI
+
+  enemy.think-=dt;
+
+  if(enemy.hurtTimer<=0){
+
+    const distance=player.x-enemy.x;
+
+    enemy.facing=distance<0?-1:1;
+
+    if(enemy.attackTimer<=0){
+
+      if(Math.abs(distance)>125){
+
+        enemy.vx=enemy.facing*125;
+        enemy.block=false;
+
+      }else{
+
+        enemy.vx*=.7;
+
+        if(enemy.think<=0){
+
+          enemy.think=.35+Math.random()*.65;
+
+          const r=Math.random();
+
+          if(r<.25){
+            enemy.block=true;
+
+            setTimeout(()=>{
+              enemy.block=false;
+            },350+Math.random()*400);
+
+          }else{
+            enemy.block=false;
+            enemyAttack();
+          }
+        }
+      }
+    }
+  }
+
+  enemy.x+=enemy.vx*dt;
+  enemy.vx*=.9;
+
+  // ENERGY REGEN
+
+  player.energy=Math.min(
+    player.maxEnergy,
+    player.energy+14*dt
+  );
+
+  enemy.energy=Math.min(
+    enemy.maxEnergy,
+    enemy.energy+10*dt
+  );
+
+  // LIMITS
+
+  const margin=80;
+
+  player.x=Math.max(margin,Math.min(W-margin,player.x));
+  enemy.x=Math.max(margin,Math.min(W-margin,enemy.x));
+
+  if(Math.abs(player.x-enemy.x)<65){
+
+    const mid=(player.x+enemy.x)/2;
+
+    if(player.x<enemy.x){
+      player.x=mid-33;
+      enemy.x=mid+33;
+    }else{
+      enemy.x=mid-33;
+      player.x=mid+33;
+    }
+  }
+
+  updateParticles();
+  updateFloating();
+
+  if(shake>0)
+    shake*=.86;
+
+  updateHUD();
+}
+
+function spawnParticle(x,y,type){
+
+  let colors;
+
+  if(type==="magic")
+    colors=["#a950ff","#e06cff","#6cc8ff","#ffffff"];
+  else if(type==="dash")
+    colors=["#62d7ff","#ffffff","#3977ff"];
+  else
+    colors=["#ffffff","#ffbd5c","#ff593d","#ffd36a"];
+
+  particles.push({
+    x,
+    y,
+    vx:(Math.random()-.5)*320,
+    vy:(Math.random()-.8)*300,
+    life:.3+Math.random()*.5,
+    max:.7,
+    size:2+Math.random()*5,
+    color:colors[Math.floor(Math.random()*colors.length)]
+  });
+}
+
+function updateParticles(){
+
+  for(let i=particles.length-1;i>=0;i--){
+
+    const p=particles[i];
+
+    p.life-=1/60;
+    p.x+=p.vx/60;
+    p.y+=p.vy/60;
+    p.vy+=420/60;
+
+    if(p.life<=0)
+      particles.splice(i,1);
+  }
+}
+
+function updateFloating(){
+
+  for(let i=floating.length-1;i>=0;i--){
+
+    const f=floating[i];
+
+    f.life-=1/60;
+    f.y-=45/60;
+
+    if(f.life<=0)
+      floating.splice(i,1);
+  }
+}
+
+function updateHUD(){
+
+  document.getElementById("playerHP").style.width=
+    player.hp/player.maxHp*100+"%";
+
+  document.getElementById("enemyHP").style.width=
+    enemy.hp/enemy.maxHp*100+"%";
+
+  document.getElementById("playerEnergy").style.width=
+    player.energy/player.maxEnergy*100+"%";
+
+  document.getElementById("enemyEnergy").style.width=
+    enemy.energy/enemy.maxEnergy*100+"%";
+
+  const combo=document.getElementById("combo");
+
+  if(player.combo>=2){
+    combo.textContent="COMBO x"+player.combo;
+    combo.classList.add("show");
+  }else{
+    combo.classList.remove("show");
+  }
+}
+
+function draw(){
+
+  ctx.clearRect(0,0,W,H);
+
+  ctx.save();
+
+  if(shake>1){
+    ctx.translate(
+      (Math.random()-.5)*shake,
+      (Math.random()-.5)*shake
+    );
+  }
+
+  drawBackground();
+  drawArena();
+  drawFighter(player,true);
+  drawFighter(enemy,false);
+  drawParticles();
+  drawFloating();
+
+  ctx.restore();
+
+  requestAnimationFrame(draw);
+}
+
+function drawBackground(){
+
+  const g=ctx.createLinearGradient(0,0,0,H);
+
+  g.addColorStop(0,"#050814");
+  g.addColorStop(.45,"#11172a");
+  g.addColorStop(1,"#080b11");
+
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,W,H);
+
+  // moon
+
+  ctx.beginPath();
+  ctx.arc(W*.5,H*.22,65,0,Math.PI*2);
+  ctx.fillStyle="rgba(170,190,255,.08)";
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(W*.5,H*.22,43,0,Math.PI*2);
+  ctx.fillStyle="rgba(220,230,255,.15)";
+  ctx.fill();
+
+  // distant ruins
+
+  ctx.fillStyle="#080b14";
+
+  for(let i=0;i<12;i++){
+
+    const x=i*(W/11);
+
+    const h=70+((i*47)%110);
+
+    ctx.fillRect(
+      x,
+      groundY()-h,
+      70,
+      h
     );
 
-    enemyBox.classList.add("shake");
+    for(let j=0;j<3;j++){
 
-    setTimeout(function(){
-        enemyBox.classList.remove("shake");
-    },250);
+      ctx.fillStyle="rgba(70,85,120,.08)";
 
-    log(
-        "🔥 POWER ATTACK! " +
-        damage +
-        " damage!"
-    );
-
-    updateUI();
-
-    if(enemyHP <= 0){
-
-        setTimeout(winGame,500);
-
-        return;
+      ctx.fillRect(
+        x+10+j*20,
+        groundY()-h+20,
+        10,
+        25
+      );
     }
 
-    setTimeout(enemyTurn,650);
+    ctx.fillStyle="#080b14";
+  }
+
+  // torches
+
+  for(const x of [W*.12,W*.88]){
+
+    ctx.beginPath();
+    ctx.arc(x,groundY()-125,30,0,Math.PI*2);
+    ctx.fillStyle="rgba(255,90,20,.08)";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(x,groundY()-125,10,0,Math.PI*2);
+    ctx.fillStyle="#ff782f";
+    ctx.fill();
+
+    ctx.fillStyle="#7b4624";
+    ctx.fillRect(x-3,groundY()-105,6,55);
+  }
 }
 
+function drawArena(){
 
-/* HEAL */
+  const gy=groundY();
 
-function heal(){
+  // floor
 
-    if(!canAct()) return;
+  const floor=ctx.createLinearGradient(0,gy,0,H);
 
-    actionLocked = true;
+  floor.addColorStop(0,"#242b38");
+  floor.addColorStop(1,"#080a0e");
 
-    const amount =
-        randomDamage(15,30);
+  ctx.fillStyle=floor;
+  ctx.fillRect(0,gy,W,H-gy);
 
-    playerHP =
-        Math.min(
-            maxPlayerHP,
-            playerHP + amount
-        );
+  // horizon
 
-    log(
-        "❤️ Kamu memulihkan " +
-        amount +
-        " HP!"
+  ctx.fillStyle="#495469";
+  ctx.fillRect(0,gy,W,3);
+
+  // perspective lines
+
+  ctx.strokeStyle="rgba(150,170,200,.10)";
+  ctx.lineWidth=2;
+
+  for(let i=-10;i<=10;i++){
+
+    ctx.beginPath();
+    ctx.moveTo(W/2,gy);
+    ctx.lineTo(
+      W/2+i*180,
+      H
+    );
+    ctx.stroke();
+  }
+
+  for(let i=0;i<7;i++){
+
+    const y=gy+Math.pow(i/6,1.7)*(H-gy);
+
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(W,y);
+    ctx.stroke();
+  }
+
+  // center emblem
+
+  ctx.beginPath();
+  ctx.ellipse(W/2,gy+65,110,35,0,0,Math.PI*2);
+  ctx.strokeStyle="rgba(100,120,160,.25)";
+  ctx.lineWidth=3;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(W/2-55,gy+65);
+  ctx.lineTo(W/2+55,gy+65);
+  ctx.stroke();
+}
+
+function drawFighter(f,isPlayer){
+
+  const x=f.x;
+  const y=f.y;
+
+  ctx.save();
+
+  ctx.translate(x,y);
+
+  // shadow
+
+  ctx.beginPath();
+  ctx.ellipse(
+    0,
+    5,
+    48,
+    12,
+    0,
+    0,
+    Math.PI*2
+  );
+
+  ctx.fillStyle="rgba(0,0,0,.55)";
+  ctx.fill();
+
+  // hurt flash
+
+  if(f.hurtTimer>0){
+    ctx.globalAlpha=.72;
+  }
+
+  const facing=f.facing;
+
+  // aura for skill
+
+  if(f.state==="skill"){
+
+    const radius=70+Math.sin(time*25)*8;
+
+    ctx.beginPath();
+    ctx.arc(0,-75,radius,0,Math.PI*2);
+
+    ctx.strokeStyle=isPlayer
+      ?"rgba(60,180,255,.8)"
+      :"rgba(255,50,70,.8)";
+
+    ctx.lineWidth=5;
+    ctx.shadowBlur=25;
+    ctx.shadowColor=ctx.strokeStyle;
+    ctx.stroke();
+
+    ctx.shadowBlur=0;
+  }
+
+  // legs
+
+  ctx.strokeStyle=isPlayer?"#273d61":"#421c25";
+  ctx.lineWidth=14;
+  ctx.lineCap="round";
+
+  ctx.beginPath();
+  ctx.moveTo(-12,0);
+  ctx.lineTo(-22,-42);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(12,0);
+  ctx.lineTo(22,-42);
+  ctx.stroke();
+
+  // boots
+
+  ctx.fillStyle=isPlayer?"#152238":"#210e13";
+
+  ctx.fillRect(-31,-44,18,10);
+  ctx.fillRect(13,-44,18,10);
+
+  // body armor
+
+  const body=ctx.createLinearGradient(
+    -28,-115,
+    28,-45
+  );
+
+  if(isPlayer){
+    body.addColorStop(0,"#8aa8c8");
+    body.addColorStop(.45,"#273f63");
+    body.addColorStop(1,"#111a2a");
+  }else{
+    body.addColorStop(0,"#8b2635");
+    body.addColorStop(.45,"#48151f");
+    body.addColorStop(1,"#180b10");
+  }
+
+  ctx.fillStyle=body;
+
+  ctx.beginPath();
+  ctx.moveTo(-28,-105);
+  ctx.lineTo(-19,-47);
+  ctx.lineTo(20,-47);
+  ctx.lineTo(29,-105);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.strokeStyle=isPlayer?"#76d9ff":"#ff3f52";
+  ctx.lineWidth=3;
+  ctx.stroke();
+
+  // chest core
+
+  ctx.beginPath();
+  ctx.arc(0,-77,9,0,Math.PI*2);
+
+  ctx.fillStyle=isPlayer?"#48caff":"#ff263d";
+
+  ctx.shadowBlur=18;
+  ctx.shadowColor=ctx.fillStyle;
+  ctx.fill();
+  ctx.shadowBlur=0;
+
+  // arms
+
+  ctx.strokeStyle=isPlayer?"#516b8d":"#57202b";
+  ctx.lineWidth=13;
+
+  ctx.beginPath();
+  ctx.moveTo(-23,-98);
+  ctx.lineTo(-42,-67);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(23,-98);
+  ctx.lineTo(42,-67);
+  ctx.stroke();
+
+  // weapon / fist
+
+  if(isPlayer){
+
+    ctx.save();
+
+    ctx.translate(
+      facing*42,
+      -67
     );
 
-    updateUI();
-
-    setTimeout(enemyTurn,650);
-}
-
-
-/* CAN ACT */
-
-function canAct(){
-
-    if(!gameRunning){
-        return false;
-    }
-
-    if(actionLocked){
-        return false;
-    }
-
-    return true;
-}
-
-
-/* ENEMY TURN */
-
-function enemyTurn(){
-
-    if(!gameRunning) return;
-
-    let damage =
-        randomDamage(
-            10 + enemyLevel * 2,
-            20 + enemyLevel * 3
-        );
-
-    if(defending){
-
-        damage =
-            Math.floor(damage * .4);
-
-        defending = false;
-    }
-
-    playerHP -= damage;
-
-    showDamage(
-        damage,
-        playerBox
+    ctx.rotate(
+      facing*(f.state==="attack"?-.65:0)
     );
 
-    playerBox.classList.add("shake");
+    ctx.strokeStyle="#d7e7ff";
+    ctx.lineWidth=5;
 
-    setTimeout(function(){
-        playerBox.classList.remove("shake");
-    },250);
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(facing*65,-15);
+    ctx.stroke();
 
-    log(
-        "👹 Demon menyerang! " +
-        damage +
-        " damage ke kamu."
+    ctx.strokeStyle="#68c9ff";
+    ctx.lineWidth=2;
+
+    ctx.beginPath();
+    ctx.moveTo(facing*5,-3);
+    ctx.lineTo(facing*70,-18);
+    ctx.stroke();
+
+    ctx.restore();
+
+  }else{
+
+    ctx.fillStyle="#8b2738";
+
+    ctx.beginPath();
+    ctx.arc(
+      facing*45,
+      -66,
+      11,
+      0,
+      Math.PI*2
     );
+    ctx.fill();
 
-    updateUI();
+    // claw
 
-    if(playerHP <= 0){
+    ctx.strokeStyle="#d84a5d";
+    ctx.lineWidth=3;
 
-        setTimeout(loseGame,500);
+    for(let i=0;i<3;i++){
 
-        return;
+      ctx.beginPath();
+      ctx.moveTo(
+        facing*48,
+        -62+i*4
+      );
+
+      ctx.lineTo(
+        facing*(67+i*5),
+        -70+i*8
+      );
+
+      ctx.stroke();
     }
+  }
 
-    round++;
+  // head
 
-    actionLocked = false;
+  ctx.beginPath();
+  ctx.arc(0,-128,25,0,Math.PI*2);
 
-    updateUI();
-}
+  ctx.fillStyle=isPlayer
+    ?"linear-gradient"
+    :"#331018";
 
-
-/* DAMAGE EFFECT */
-
-function showDamage(damage,targetBox){
-
-    const damageElement =
-        document.createElement("div");
-
-    damageElement.className =
-        "damage";
-
-    damageElement.textContent =
-        "-" + damage;
-
-    const rect =
-        targetBox.getBoundingClientRect();
-
-    const arenaRect =
-        arena.getBoundingClientRect();
-
-    damageElement.style.left =
-        (rect.left - arenaRect.left + rect.width / 2) + "px";
-
-    damageElement.style.top =
-        (rect.top - arenaRect.top + 40) + "px";
-
-    arena.appendChild(damageElement);
-
-    setTimeout(function(){
-        damageElement.remove();
-    },700);
-}
-
-
-/* WIN */
-
-function winGame(){
-
-    gameRunning = false;
-
-    const xp =
-        50 + enemyLevel * 10;
-
-    const reward =
-        100 + enemyLevel * 25;
-
-    playerXP += xp;
-
-    coins += reward;
-
-    if(playerXP >= 100){
-
-        playerXP -= 100;
-
-        playerLevel++;
-
-        localStorage.setItem(
-            "battlePlayerLevel",
-            playerLevel
-        );
-
-        log(
-            "🎉 LEVEL UP! Kamu sekarang level " +
-            playerLevel + "!"
-        );
-    }
-
-    localStorage.setItem(
-        "battlePlayerXP",
-        playerXP
+  if(isPlayer){
+    const hg=ctx.createRadialGradient(
+      -5,-135,2,
+      0,-128,28
     );
 
-    localStorage.setItem(
-        "battleCoins",
-        coins
+    hg.addColorStop(0,"#f0c9ad");
+    hg.addColorStop(1,"#9c684f");
+
+    ctx.fillStyle=hg;
+  }else{
+    const hg=ctx.createRadialGradient(
+      -7,-136,2,
+      0,-128,28
     );
 
-    document.getElementById("resultTitle")
-        .textContent = "🏆 KAMU MENANG!";
+    hg.addColorStop(0,"#8b3744");
+    hg.addColorStop(1,"#240b11");
 
-    document.getElementById("resultIcon")
-        .textContent = "⚔️";
+    ctx.fillStyle=hg;
+  }
 
-    document.getElementById("resultText")
-        .textContent =
-        "Demon berhasil kamu kalahkan!";
+  ctx.fill();
 
-    document.getElementById("rewardText")
-        .textContent =
-        "+" + xp +
-        " EXP • +" +
-        reward +
-        " COIN";
+  ctx.strokeStyle=isPlayer?"#6f879f":"#7b2532";
+  ctx.lineWidth=3;
+  ctx.stroke();
 
-    resultScreen.classList.remove("hidden");
+  // helmet / horns
+
+  if(isPlayer){
+
+    ctx.fillStyle="#17263b";
+
+    ctx.beginPath();
+    ctx.moveTo(-24,-135);
+    ctx.lineTo(-18,-160);
+    ctx.lineTo(0,-151);
+    ctx.lineTo(18,-160);
+    ctx.lineTo(24,-135);
+    ctx.closePath();
+    ctx.fill();
+
+  }else{
+
+    ctx.fillStyle="#171016";
+
+    ctx.beginPath();
+    ctx.moveTo(-18,-144);
+    ctx.lineTo(-35,-175);
+    ctx.lineTo(-8,-157);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(18,-144);
+    ctx.lineTo(35,-175);
+    ctx.lineTo(8,-157);
+    ctx.closePath();
+    ctx.fill();
+
+  }
+
+  // eyes
+
+  ctx.fillStyle=isPlayer?"#78d9ff":"#ff3349";
+
+  ctx.shadowBlur=12;
+  ctx.shadowColor=ctx.fillStyle;
+
+  ctx.fillRect(-11,-132,7,4);
+  ctx.fillRect(4,-132,7,4);
+
+  ctx.shadowBlur=0;
+
+  // attack slash
+
+  if(f.state==="attack" || f.state==="heavy"){
+
+    ctx.save();
+
+    ctx.translate(facing*20,-75);
+
+    ctx.rotate(
+      facing*(f.state==="heavy"?-.25:-.65)
+    );
+
+    ctx.beginPath();
+    ctx.arc(
+      0,
+      0,
+      f.state==="heavy"?70:55,
+      -1.15,
+      .25
+    );
+
+    ctx.strokeStyle=
+      f.state==="heavy"
+      ?"rgba(255,70,70,.85)"
+      :"rgba(130,220,255,.85)";
+
+    ctx.lineWidth=
+      f.state==="heavy"?8:5;
+
+    ctx.shadowBlur=18;
+    ctx.shadowColor=ctx.strokeStyle;
+
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  ctx.restore();
 }
 
+function drawParticles(){
 
-/* LOSE */
+  for(const p of particles){
 
-function loseGame(){
+    ctx.globalAlpha=Math.max(0,p.life/p.max);
 
-    gameRunning = false;
+    ctx.fillStyle=p.color;
 
-    document.getElementById("resultTitle")
-        .textContent = "💀 KAMU KALAH";
+    ctx.beginPath();
+    ctx.arc(
+      p.x,
+      p.y,
+      p.size,
+      0,
+      Math.PI*2
+    );
 
-    document.getElementById("resultIcon")
-        .textContent = "💀";
+    ctx.fill();
+  }
 
-    document.getElementById("resultText")
-        .textContent =
-        "Demon terlalu kuat. Coba strategi lain!";
-
-    document.getElementById("rewardText")
-        .textContent =
-        "Level " +
-        playerLevel +
-        " • XP " +
-        playerXP +
-        " • Coin " +
-        coins;
-
-    resultScreen.classList.remove("hidden");
+  ctx.globalAlpha=1;
 }
 
+function drawFloating(){
 
-/* INITIAL UI */
+  for(const f of floating){
 
-updateUI();
+    ctx.globalAlpha=f.life;
+
+    ctx.font="900 20px Arial";
+    ctx.textAlign="center";
+    ctx.fillStyle=f.color;
+    ctx.shadowBlur=8;
+    ctx.shadowColor="#000";
+
+    ctx.fillText(
+      f.text,
+      f.x,
+      f.y
+    );
+
+    ctx.shadowBlur=0;
+  }
+
+  ctx.globalAlpha=1;
+}
+
+function win(){
+
+  if(gameOver)return;
+
+  gameOver=true;
+
+  const gainedXP=35+level*5;
+  const gainedCoins=20+level*4;
+
+  xp+=gainedXP;
+  coins+=gainedCoins;
+
+  if(xp>=100){
+    xp-=100;
+    level++;
+  }
+
+  saveProgress();
+
+  showMessage(
+    "VICTORY",
+    `+${gainedXP} XP  •  +${gainedCoins} COINS`
+  );
+}
+
+function lose(){
+
+  if(gameOver)return;
+
+  gameOver=true;
+
+  showMessage(
+    "DEFEATED",
+    "Demon masih terlalu kuat..."
+  );
+}
+
+function showMessage(title,text){
+
+  document.getElementById("messageTitle").textContent=title;
+  document.getElementById("messageText").textContent=
+    text+"  •  Klik untuk main lagi";
+
+  document.getElementById("message").classList.add("show");
+
+  document.getElementById("message").onclick=()=>{
+    startGame();
+  };
+}
+
+function saveProgress(){
+
+  localStorage.setItem("battleLevel",level);
+  localStorage.setItem("battleXP",xp);
+  localStorage.setItem("battleCoins",coins);
+
+  document.getElementById("levelStat").textContent=level;
+  document.getElementById("xpStat").textContent=xp;
+  document.getElementById("coinStat").textContent=coins;
+}
+
+function loop(){
+  update();
+  requestAnimationFrame(loop);
+}
+
+resetFighters();
+draw();
+loop();
 
 </script>
 
 </body>
 </html>
-```
