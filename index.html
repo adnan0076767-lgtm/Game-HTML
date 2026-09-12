@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Target Shooter | Game HTML</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#111827,#1e293b);
+    color:white;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:15px;
+    user-select:none;
+}
+
+.game{
+    width:100%;
+    max-width:700px;
+    text-align:center;
+}
+
+h1{
+    font-size:clamp(28px,7vw,48px);
+    margin-bottom:8px;
+}
+
+.subtitle{
+    color:#cbd5e1;
+    margin-bottom:18px;
+}
+
+.info{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-bottom:12px;
+}
+
+.box{
+    background:#334155;
+    padding:12px;
+    border-radius:12px;
+    font-weight:bold;
+}
+
+.box span{
+    display:block;
+    font-size:24px;
+    margin-top:4px;
+}
+
+#gameArea{
+    position:relative;
+    width:100%;
+    height:500px;
+    max-height:70vh;
+    min-height:380px;
+    background:
+        radial-gradient(circle at 30% 20%,#334155 0 2px,transparent 3px),
+        radial-gradient(circle at 70% 70%,#475569 0 2px,transparent 3px),
+        #0f172a;
+    border:3px solid #475569;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 15px 40px rgba(0,0,0,.4);
+}
+
+#target{
+    position:absolute;
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    background:
+        radial-gradient(circle,
+        white 0 12%,
+        #ef4444 13% 35%,
+        white 36% 55%,
+        #ef4444 56% 100%);
+    box-shadow:0 0 20px rgba(239,68,68,.7);
+    cursor:pointer;
+    display:none;
+    transform:translate(-50%,-50%);
+}
+
+#target:active{
+    transform:translate(-50%,-50%) scale(.9);
+}
+
+button{
+    margin-top:15px;
+    border:none;
+    border-radius:12px;
+    padding:14px 28px;
+    font-size:17px;
+    font-weight:bold;
+    background:#22c55e;
+    color:white;
+    cursor:pointer;
+    box-shadow:0 6px 15px rgba(0,0,0,.3);
+}
+
+button:hover{
+    filter:brightness(1.1);
+}
+
+button:active{
+    transform:scale(.96);
+}
+
+.message{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    padding:20px;
+    background:rgba(15,23,42,.75);
+    z-index:5;
+}
+
+.message h2{
+    font-size:32px;
+    margin-bottom:10px;
+}
+
+.message p{
+    color:#cbd5e1;
+}
+
+.hidden{
+    display:none;
+}
+
+@media(max-width:500px){
+    #gameArea{
+        height:55vh;
+        min-height:360px;
+    }
+
+    #target{
+        width:60px;
+        height:60px;
+    }
+
+    .box{
+        padding:9px 5px;
+        font-size:13px;
+    }
+
+    .box span{
+        font-size:20px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <h1>🎯 TARGET SHOOTER</h1>
+    <p class="subtitle">Klik target secepat mungkin!</p>
+
+    <div class="info">
+        <div class="box">
+            SKOR
+            <span id="score">0</span>
+        </div>
+
+        <div class="box">
+            NYAWA
+            <span id="lives">10</span>
+        </div>
+
+        <div class="box">
+            WAKTU
+            <span><span id="time">30</span>s</span>
+        </div>
+    </div>
+
+    <div id="gameArea">
+
+        <div id="target"></div>
+
+        <div id="startScreen" class="message">
+            <h2>🎮 Siap Bermain?</h2>
+            <p>Hancurkan target sebanyak mungkin!</p>
+            <button onclick="startGame()">MULAI GAME</button>
+        </div>
+
+        <div id="gameOver" class="message hidden">
+            <h2>🏆 GAME SELESAI!</h2>
+            <p>Skor kamu:</p>
+            <h2 id="finalScore">0</h2>
+            <button onclick="startGame()">MAIN LAGI</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+const target = document.getElementById("target");
+const gameArea = document.getElementById("gameArea");
+
+const scoreText = document.getElementById("score");
+const livesText = document.getElementById("lives");
+const timeText = document.getElementById("time");
+
+const startScreen = document.getElementById("startScreen");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+
+let score = 0;
+let lives = 10;
+let time = 30;
+
+let gameRunning = false;
+let timer;
+
+function startGame(){
+
+    score = 0;
+    lives = 10;
+    time = 30;
+
+    scoreText.textContent = score;
+    livesText.textContent = lives;
+    timeText.textContent = time;
+
+    gameRunning = true;
+
+    startScreen.classList.add("hidden");
+    gameOverScreen.classList.add("hidden");
+
+    target.style.display = "block";
+
+    moveTarget();
+
+    clearInterval(timer);
+
+    timer = setInterval(() => {
+
+        time--;
+
+        timeText.textContent = time;
+
+        if(time <= 0){
+            endGame();
+        }
+
+    },1000);
+}
+
+function moveTarget(){
+
+    if(!gameRunning) return;
+
+    const areaWidth = gameArea.clientWidth;
+    const areaHeight = gameArea.clientHeight;
+
+    const targetSize = target.offsetWidth;
+
+    const x = Math.random() * (areaWidth - targetSize) + targetSize / 2;
+    const y = Math.random() * (areaHeight - targetSize) + targetSize / 2;
+
+    target.style.left = x + "px";
+    target.style.top = y + "px";
+}
+
+target.addEventListener("click", hitTarget);
+
+target.addEventListener("touchstart", function(e){
+    e.preventDefault();
+    hitTarget();
+});
+
+function hitTarget(){
+
+    if(!gameRunning) return;
+
+    score++;
+
+    scoreText.textContent = score;
+
+    moveTarget();
+
+    // Setiap 5 hit target makin kecil
+    if(score % 5 === 0){
+
+        const newSize = Math.max(
+            40,
+            70 - Math.floor(score / 5) * 5
+        );
+
+        target.style.width = newSize + "px";
+        target.style.height = newSize + "px";
+    }
+}
+
+gameArea.addEventListener("click", function(e){
+
+    if(!gameRunning) return;
+
+    if(e.target === gameArea){
+
+        lives--;
+
+        livesText.textContent = lives;
+
+        if(lives <= 0){
+            endGame();
+        }
+    }
+});
+
+function endGame(){
+
+    gameRunning = false;
+
+    clearInterval(timer);
+
+    target.style.display = "none";
+
+    finalScore.textContent = score;
+
+    gameOverScreen.classList.remove("hidden");
+
+    target.style.width = "70px";
+    target.style.height = "70px";
+}
+</script>
+
+</body>
+</html>
