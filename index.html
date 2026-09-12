@@ -2,166 +2,275 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 
-<title>Target Shooter | Game HTML</title>
+<title>Target Shooter V2 PRO</title>
+<meta name="description" content="Target Shooter V2 PRO - game arcade HTML gratis">
 
 <style>
 *{
     box-sizing:border-box;
     margin:0;
     padding:0;
+    -webkit-tap-highlight-color:transparent;
 }
 
 body{
-    font-family:Arial, sans-serif;
-    background:linear-gradient(135deg,#111827,#1e293b);
-    color:white;
+    font-family:Arial,Helvetica,sans-serif;
     min-height:100vh;
+    background:
+        radial-gradient(circle at top,#312e81 0%,transparent 35%),
+        linear-gradient(135deg,#020617,#111827 55%,#1e1b4b);
+    color:#fff;
     display:flex;
     justify-content:center;
     align-items:center;
     padding:15px;
-    user-select:none;
+    overflow-x:hidden;
 }
 
 .game{
     width:100%;
-    max-width:700px;
-    text-align:center;
+    max-width:760px;
 }
 
-h1{
+.header{
+    text-align:center;
+    margin-bottom:14px;
+}
+
+.logo{
     font-size:clamp(28px,7vw,48px);
-    margin-bottom:8px;
+    font-weight:900;
+    letter-spacing:2px;
+    text-shadow:0 0 18px rgba(129,140,248,.8);
 }
 
 .subtitle{
     color:#cbd5e1;
-    margin-bottom:18px;
+    margin-top:5px;
+    font-size:14px;
 }
 
-.info{
+.stats{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
-    margin-bottom:12px;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-bottom:10px;
 }
 
-.box{
-    background:#334155;
-    padding:12px;
-    border-radius:12px;
-    font-weight:bold;
+.stat{
+    background:rgba(30,41,59,.9);
+    border:1px solid rgba(148,163,184,.25);
+    border-radius:14px;
+    padding:9px 4px;
+    text-align:center;
+    box-shadow:0 8px 20px rgba(0,0,0,.2);
 }
 
-.box span{
+.stat small{
     display:block;
-    font-size:24px;
-    margin-top:4px;
+    color:#94a3b8;
+    font-size:10px;
+    font-weight:bold;
+    letter-spacing:.5px;
+}
+
+.stat strong{
+    display:block;
+    margin-top:3px;
+    font-size:21px;
 }
 
 #gameArea{
     position:relative;
     width:100%;
-    height:500px;
-    max-height:70vh;
-    min-height:380px;
-    background:
-        radial-gradient(circle at 30% 20%,#334155 0 2px,transparent 3px),
-        radial-gradient(circle at 70% 70%,#475569 0 2px,transparent 3px),
-        #0f172a;
-    border:3px solid #475569;
-    border-radius:20px;
+    height:min(620px,72vh);
+    min-height:390px;
     overflow:hidden;
-    box-shadow:0 15px 40px rgba(0,0,0,.4);
-}
-
-#target{
-    position:absolute;
-    width:70px;
-    height:70px;
-    border-radius:50%;
+    border:2px solid #6366f1;
+    border-radius:22px;
     background:
-        radial-gradient(circle,
-        white 0 12%,
-        #ef4444 13% 35%,
-        white 36% 55%,
-        #ef4444 56% 100%);
-    box-shadow:0 0 20px rgba(239,68,68,.7);
-    cursor:pointer;
-    display:none;
-    transform:translate(-50%,-50%);
+        linear-gradient(rgba(99,102,241,.06) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(99,102,241,.06) 1px,transparent 1px),
+        radial-gradient(circle at center,#172554,#020617 75%);
+    background-size:35px 35px;
+    box-shadow:
+        0 0 30px rgba(79,70,229,.25),
+        inset 0 0 50px rgba(0,0,0,.55);
+    touch-action:none;
 }
 
-#target:active{
-    transform:translate(-50%,-50%) scale(.9);
-}
-
-button{
-    margin-top:15px;
-    border:none;
-    border-radius:12px;
-    padding:14px 28px;
-    font-size:17px;
-    font-weight:bold;
-    background:#22c55e;
-    color:white;
-    cursor:pointer;
-    box-shadow:0 6px 15px rgba(0,0,0,.3);
-}
-
-button:hover{
-    filter:brightness(1.1);
-}
-
-button:active{
-    transform:scale(.96);
-}
-
-.message{
+#gameArea::before{
+    content:"";
     position:absolute;
     inset:0;
+    background:radial-gradient(circle,transparent 40%,rgba(0,0,0,.35));
+    pointer-events:none;
+}
+
+.target{
+    position:absolute;
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    cursor:pointer;
+    display:none;
+    z-index:3;
+    background:
+        radial-gradient(circle,
+        #fff 0 11%,
+        #ef4444 12% 29%,
+        #fff 30% 47%,
+        #ef4444 48% 70%,
+        #fff 71% 82%,
+        #dc2626 83% 100%);
+    box-shadow:
+        0 0 12px rgba(248,113,113,.9),
+        0 0 30px rgba(239,68,68,.55);
+    transition:left .12s ease,top .12s ease,transform .08s;
+}
+
+.target:active{
+    transform:translate(-50%,-50%) scale(.82);
+}
+
+.overlay{
+    position:absolute;
+    inset:0;
+    z-index:10;
     display:flex;
     justify-content:center;
     align-items:center;
     flex-direction:column;
-    padding:20px;
-    background:rgba(15,23,42,.75);
-    z-index:5;
+    text-align:center;
+    padding:25px;
+    background:rgba(2,6,23,.82);
+    backdrop-filter:blur(5px);
 }
 
-.message h2{
-    font-size:32px;
-    margin-bottom:10px;
-}
-
-.message p{
-    color:#cbd5e1;
-}
-
-.hidden{
+.overlay.hidden{
     display:none;
 }
 
+.overlay h2{
+    font-size:clamp(28px,7vw,42px);
+    margin-bottom:10px;
+}
+
+.overlay p{
+    color:#cbd5e1;
+    line-height:1.5;
+    max-width:450px;
+}
+
+.big-score{
+    font-size:54px;
+    font-weight:900;
+    margin:8px 0;
+    color:#facc15;
+    text-shadow:0 0 20px rgba(250,204,21,.6);
+}
+
+button{
+    border:0;
+    padding:14px 30px;
+    margin-top:18px;
+    border-radius:14px;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    color:#fff;
+    font-weight:900;
+    font-size:16px;
+    cursor:pointer;
+    box-shadow:0 8px 25px rgba(79,70,229,.45);
+}
+
+button:active{
+    transform:scale(.95);
+}
+
+.combo{
+    position:absolute;
+    z-index:6;
+    pointer-events:none;
+    font-weight:900;
+    font-size:25px;
+    color:#facc15;
+    text-shadow:0 0 12px #f59e0b;
+    animation:comboAnim .65s forwards;
+}
+
+@keyframes comboAnim{
+    0%{
+        opacity:1;
+        transform:translate(-50%,-50%) scale(.7);
+    }
+    100%{
+        opacity:0;
+        transform:translate(-50%,-120%) scale(1.25);
+    }
+}
+
+.hit{
+    position:absolute;
+    width:90px;
+    height:90px;
+    border:4px solid #facc15;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    z-index:5;
+    animation:hitAnim .35s forwards;
+}
+
+@keyframes hitAnim{
+    from{
+        opacity:1;
+        transform:translate(-50%,-50%) scale(.3);
+    }
+    to{
+        opacity:0;
+        transform:translate(-50%,-50%) scale(1.5);
+    }
+}
+
+.footer{
+    text-align:center;
+    color:#64748b;
+    font-size:11px;
+    margin-top:10px;
+}
+
 @media(max-width:500px){
+    body{
+        padding:10px;
+        align-items:flex-start;
+        padding-top:18px;
+    }
+
+    .stats{
+        gap:5px;
+    }
+
+    .stat{
+        border-radius:11px;
+        padding:8px 2px;
+    }
+
+    .stat strong{
+        font-size:18px;
+    }
+
     #gameArea{
-        height:55vh;
-        min-height:360px;
+        min-height:400px;
+        height:62vh;
+        border-radius:18px;
     }
 
-    #target{
-        width:60px;
-        height:60px;
-    }
-
-    .box{
-        padding:9px 5px;
-        font-size:13px;
-    }
-
-    .box span{
-        font-size:20px;
+    .target{
+        width:62px;
+        height:62px;
     }
 }
 </style>
@@ -171,88 +280,135 @@ button:active{
 
 <div class="game">
 
-    <h1>🎯 TARGET SHOOTER</h1>
-    <p class="subtitle">Klik target secepat mungkin!</p>
+    <div class="header">
+        <div class="logo">🎯 TARGET SHOOTER</div>
+        <div class="subtitle">V2 PRO • Hit the target • Beat your record</div>
+    </div>
 
-    <div class="info">
-        <div class="box">
-            SKOR
-            <span id="score">0</span>
+    <div class="stats">
+
+        <div class="stat">
+            <small>SKOR</small>
+            <strong id="score">0</strong>
         </div>
 
-        <div class="box">
-            NYAWA
-            <span id="lives">10</span>
+        <div class="stat">
+            <small>COMBO</small>
+            <strong id="combo">0x</strong>
         </div>
 
-        <div class="box">
-            WAKTU
-            <span><span id="time">30</span>s</span>
+        <div class="stat">
+            <small>LEVEL</small>
+            <strong id="level">1</strong>
         </div>
+
+        <div class="stat">
+            <small>WAKTU</small>
+            <strong><span id="time">30</span>s</strong>
+        </div>
+
     </div>
 
     <div id="gameArea">
 
-        <div id="target"></div>
+        <div id="target" class="target"></div>
 
-        <div id="startScreen" class="message">
-            <h2>🎮 Siap Bermain?</h2>
-            <p>Hancurkan target sebanyak mungkin!</p>
-            <button onclick="startGame()">MULAI GAME</button>
+        <div id="startScreen" class="overlay">
+
+            <h2>🎮 READY?</h2>
+
+            <p>
+                Klik target merah sebanyak mungkin.
+                Semakin tinggi level, target semakin cepat!
+            </p>
+
+            <button onclick="startGame()">🚀 MULAI GAME</button>
+
         </div>
 
-        <div id="gameOver" class="message hidden">
-            <h2>🏆 GAME SELESAI!</h2>
-            <p>Skor kamu:</p>
-            <h2 id="finalScore">0</h2>
-            <button onclick="startGame()">MAIN LAGI</button>
+        <div id="gameOver" class="overlay hidden">
+
+            <h2>🏆 GAME OVER</h2>
+
+            <p>SKOR AKHIR</p>
+
+            <div class="big-score" id="finalScore">0</div>
+
+            <p id="bestMessage">Best Score: 0</p>
+
+            <button onclick="startGame()">🔄 MAIN LAGI</button>
+
         </div>
 
+    </div>
+
+    <div class="footer">
+        Target Shooter V2 PRO • HTML + CSS + JavaScript
     </div>
 
 </div>
 
 <script>
+
 const target = document.getElementById("target");
 const gameArea = document.getElementById("gameArea");
 
 const scoreText = document.getElementById("score");
-const livesText = document.getElementById("lives");
+const comboText = document.getElementById("combo");
+const levelText = document.getElementById("level");
 const timeText = document.getElementById("time");
 
 const startScreen = document.getElementById("startScreen");
-const gameOverScreen = document.getElementById("gameOver");
+const gameOver = document.getElementById("gameOver");
+
 const finalScore = document.getElementById("finalScore");
+const bestMessage = document.getElementById("bestMessage");
 
 let score = 0;
-let lives = 10;
+let combo = 0;
+let level = 1;
 let time = 30;
 
 let gameRunning = false;
-let timer;
+let timer = null;
+let moveTimer = null;
+
+let bestScore = Number(localStorage.getItem("targetShooterBest")) || 0;
+
+
+/* =========================
+   START GAME
+========================= */
 
 function startGame(){
 
+    clearInterval(timer);
+    clearInterval(moveTimer);
+
     score = 0;
-    lives = 10;
+    combo = 0;
+    level = 1;
     time = 30;
 
     scoreText.textContent = score;
-    livesText.textContent = lives;
+    comboText.textContent = "0x";
+    levelText.textContent = level;
     timeText.textContent = time;
 
     gameRunning = true;
 
     startScreen.classList.add("hidden");
-    gameOverScreen.classList.add("hidden");
+    gameOver.classList.add("hidden");
 
     target.style.display = "block";
+    target.style.width = "72px";
+    target.style.height = "72px";
 
     moveTarget();
 
-    clearInterval(timer);
+    startMovement();
 
-    timer = setInterval(() => {
+    timer = setInterval(function(){
 
         time--;
 
@@ -265,83 +421,339 @@ function startGame(){
     },1000);
 }
 
+
+/* =========================
+   TARGET MOVEMENT
+========================= */
+
+function startMovement(){
+
+    clearInterval(moveTimer);
+
+    const speed = Math.max(280,950 - (level * 70));
+
+    moveTimer = setInterval(function(){
+
+        if(gameRunning){
+            moveTarget();
+        }
+
+    },speed);
+}
+
+
 function moveTarget(){
 
     if(!gameRunning) return;
 
-    const areaWidth = gameArea.clientWidth;
-    const areaHeight = gameArea.clientHeight;
+    const width = gameArea.clientWidth;
+    const height = gameArea.clientHeight;
 
-    const targetSize = target.offsetWidth;
+    const size = target.offsetWidth;
 
-    const x = Math.random() * (areaWidth - targetSize) + targetSize / 2;
-    const y = Math.random() * (areaHeight - targetSize) + targetSize / 2;
+    const margin = size / 2 + 5;
+
+    const x =
+        Math.random() *
+        (width - margin * 2)
+        + margin;
+
+    const y =
+        Math.random() *
+        (height - margin * 2)
+        + margin;
 
     target.style.left = x + "px";
     target.style.top = y + "px";
 }
 
-target.addEventListener("click", hitTarget);
 
-target.addEventListener("touchstart", function(e){
-    e.preventDefault();
-    hitTarget();
-});
+/* =========================
+   HIT TARGET
+========================= */
 
-function hitTarget(){
+function hitTarget(event){
+
+    if(event){
+        event.preventDefault();
+        event.stopPropagation();
+    }
 
     if(!gameRunning) return;
 
     score++;
+    combo++;
+
+    /*
+       COMBO BONUS
+    */
+
+    let points = 10;
+
+    if(combo >= 5){
+        points = 15;
+    }
+
+    if(combo >= 10){
+        points = 25;
+    }
+
+    score += points - 1;
 
     scoreText.textContent = score;
 
+    comboText.textContent = combo + "x";
+
+
+    /*
+       LEVEL UP
+    */
+
+    const newLevel =
+        Math.min(10,Math.floor(score / 100) + 1);
+
+    if(newLevel !== level){
+
+        level = newLevel;
+
+        levelText.textContent = level;
+
+        startMovement();
+
+        showCombo(
+            "LEVEL " + level + " 🔥",
+            target.offsetLeft,
+            target.offsetTop
+        );
+    }
+
+
+    /*
+       HIT EFFECT
+    */
+
+    createHitEffect(
+        target.offsetLeft,
+        target.offsetTop
+    );
+
+
+    /*
+       COMBO EFFECT
+    */
+
+    if(combo >= 3){
+
+        showCombo(
+            "+" + points + "  COMBO " + combo + "x",
+            target.offsetLeft,
+            target.offsetTop
+        );
+    }
+
+    /*
+       TARGET MAKIN KECIL
+    */
+
+    const newSize =
+        Math.max(42,72 - (level - 1) * 4);
+
+    target.style.width = newSize + "px";
+    target.style.height = newSize + "px";
+
+
     moveTarget();
 
-    // Setiap 5 hit target makin kecil
-    if(score % 5 === 0){
-
-        const newSize = Math.max(
-            40,
-            70 - Math.floor(score / 5) * 5
-        );
-
-        target.style.width = newSize + "px";
-        target.style.height = newSize + "px";
-    }
+    playHitSound();
 }
 
-gameArea.addEventListener("click", function(e){
+
+/* =========================
+   MISSED SHOT
+========================= */
+
+function missedShot(){
 
     if(!gameRunning) return;
 
-    if(e.target === gameArea){
+    combo = 0;
 
-        lives--;
+    comboText.textContent = "0x";
 
-        livesText.textContent = lives;
+    showCombo(
+        "MISS!",
+        gameArea.clientWidth / 2,
+        gameArea.clientHeight / 2
+    );
+}
 
-        if(lives <= 0){
-            endGame();
+
+/* =========================
+   EFFECTS
+========================= */
+
+function createHitEffect(x,y){
+
+    const effect = document.createElement("div");
+
+    effect.className = "hit";
+
+    effect.style.left = x + "px";
+    effect.style.top = y + "px";
+
+    gameArea.appendChild(effect);
+
+    setTimeout(function(){
+        effect.remove();
+    },350);
+}
+
+
+function showCombo(text,x,y){
+
+    const element = document.createElement("div");
+
+    element.className = "combo";
+
+    element.textContent = text;
+
+    element.style.left = x + "px";
+    element.style.top = y + "px";
+
+    gameArea.appendChild(element);
+
+    setTimeout(function(){
+        element.remove();
+    },650);
+}
+
+
+/* =========================
+   SOUND
+========================= */
+
+let audioContext = null;
+
+function playHitSound(){
+
+    try{
+
+        if(!audioContext){
+            audioContext =
+                new (window.AudioContext ||
+                window.webkitAudioContext)();
         }
+
+        const oscillator =
+            audioContext.createOscillator();
+
+        const gain =
+            audioContext.createGain();
+
+        oscillator.type = "sine";
+
+        oscillator.frequency.setValueAtTime(
+            500,
+            audioContext.currentTime
+        );
+
+        oscillator.frequency.exponentialRampToValueAtTime(
+            900,
+            audioContext.currentTime + .08
+        );
+
+        gain.gain.setValueAtTime(
+            .12,
+            audioContext.currentTime
+        );
+
+        gain.gain.exponentialRampToValueAtTime(
+            .001,
+            audioContext.currentTime + .12
+        );
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+
+        oscillator.start();
+
+        oscillator.stop(
+            audioContext.currentTime + .12
+        );
+
+    }catch(error){
+        // Browser tidak mendukung audio
     }
-});
+}
+
+
+/* =========================
+   END GAME
+========================= */
 
 function endGame(){
 
     gameRunning = false;
 
     clearInterval(timer);
+    clearInterval(moveTimer);
 
     target.style.display = "none";
 
     finalScore.textContent = score;
 
-    gameOverScreen.classList.remove("hidden");
+    if(score > bestScore){
 
-    target.style.width = "70px";
-    target.style.height = "70px";
+        bestScore = score;
+
+        localStorage.setItem(
+            "targetShooterBest",
+            bestScore
+        );
+
+        bestMessage.textContent =
+            "🎉 NEW BEST SCORE: " + bestScore;
+
+    }else{
+
+        bestMessage.textContent =
+            "🏆 BEST SCORE: " + bestScore;
+    }
+
+    gameOver.classList.remove("hidden");
 }
+
+
+/* =========================
+   AREA CLICK
+========================= */
+
+gameArea.addEventListener("click",function(event){
+
+    if(!gameRunning) return;
+
+    if(event.target === gameArea){
+
+        missedShot();
+    }
+});
+
+
+/* =========================
+   TARGET EVENTS
+========================= */
+
+target.addEventListener(
+    "click",
+    hitTarget
+);
+
+target.addEventListener(
+    "touchstart",
+    hitTarget,
+    {passive:false}
+);
+
 </script>
 
 </body>
